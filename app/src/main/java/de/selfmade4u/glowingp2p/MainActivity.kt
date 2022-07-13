@@ -12,6 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import de.selfmade4u.glowingp2p.ui.theme.GlowingP2PTheme
 
+// https://foso.github.io/Jetpack-Compose-Playground/
+// https://developer.android.com/jetpack/compose/navigation
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
