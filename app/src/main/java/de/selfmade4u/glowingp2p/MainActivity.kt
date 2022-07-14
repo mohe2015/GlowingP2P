@@ -1,31 +1,21 @@
 package de.selfmade4u.glowingp2p
 
 import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
-import androidx.compose.material3.ListItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -35,9 +25,13 @@ import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.google.accompanist.permissions.rememberPermissionState
+import com.google.android.gms.nearby.Nearby
+import com.google.android.gms.nearby.connection.*
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.android.gms.tasks.OnSuccessListener
 import de.selfmade4u.glowingp2p.ui.theme.GlowingP2PTheme
 import kotlinx.coroutines.launch
+
 
 // https://foso.github.io/Jetpack-Compose-Playground/
 // https://developer.android.com/jetpack/compose/navigation
@@ -46,8 +40,87 @@ import kotlinx.coroutines.launch
 // https://developers.google.com/nearby/connections/overview
 // https://google.github.io/accompanist/permissions/
 
+internal class ReceiveBytesPayloadListener : PayloadCallback() {
+    override fun onPayloadReceived(endpointId: String, payload: Payload) {
+        // This always gets the full data of the payload. Is null if it's not a BYTES payload.
+        if (payload.type == Payload.Type.BYTES) {
+            val receivedBytes = payload.asBytes()
+        }
+    }
+
+    override fun onPayloadTransferUpdate(endpointId: String, update: PayloadTransferUpdate) {
+        // Bytes payloads are sent as a single chunk, so you'll receive a SUCCESS update immediately
+        // after the call to onPayloadReceived().
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 class MainActivity : ComponentActivity() {
+
+    private fun startAdvertising() {
+        Log.e("de.selfmade4u.glowingp2p", "start advertising");
+        val advertisingOptions: AdvertisingOptions = AdvertisingOptions.Builder().setStrategy(
+            Strategy.P2P_CLUSTER).build()
+        Nearby.getConnectionsClient(this)
+            .startAdvertising(
+                "test", "de.selfmade4u.glowingp2p", connectionLifecycleCallback, advertisingOptions
+            )
+            .addOnSuccessListener { unused: Void? ->  Log.e("de.selfmade4u.glowingp2p", "success"); }
+            .addOnFailureListener { e: Exception? ->  Log.e("de.selfmade4u.glowingp2p", "failure", e) }
+    }
+
+    private fun startDiscovery() {
+        Log.e("de.selfmade4u.glowingp2p", "start discovery");
+        val discoveryOptions = DiscoveryOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build()
+        Nearby.getConnectionsClient(this)
+            .startDiscovery("de.selfmade4u.glowingp2p", endpointDiscoveryCallback, discoveryOptions)
+            .addOnSuccessListener { unused: Void? ->  Log.e("de.selfmade4u.glowingp2p", "success"); }
+            .addOnFailureListener { e: Exception? ->  Log.e("de.selfmade4u.glowingp2p", "failure", e) }
+    }
+
+    private val connectionLifecycleCallback: ConnectionLifecycleCallback =
+        object : ConnectionLifecycleCallback() {
+            override fun onConnectionInitiated(endpointId: String, connectionInfo: ConnectionInfo) {
+                Log.e("de.selfmade4u.glowingp2p", "onConnectionInitiated");
+                // Automatically accept the connection on both sides.
+                Nearby.getConnectionsClient(this@MainActivity).acceptConnection(endpointId, ReceiveBytesPayloadListener())
+            }
+
+            override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
+                Log.e("de.selfmade4u.glowingp2p", "onConnectionResult");
+                when (result.status.statusCode) {
+                    ConnectionsStatusCodes.STATUS_OK -> {}
+                    ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED -> {}
+                    ConnectionsStatusCodes.STATUS_ERROR -> {}
+                    else -> {}
+                }
+            }
+
+            override fun onDisconnected(endpointId: String) {
+                Log.e("de.selfmade4u.glowingp2p", "disconnected");
+                // We've been disconnected from this endpoint. No more data can be
+                // sent or received.
+            }
+        }
+
+
+    private val endpointDiscoveryCallback: EndpointDiscoveryCallback =
+        object : EndpointDiscoveryCallback() {
+            override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
+                Log.e("de.selfmade4u.glowingp2p", "endpoint found");
+                // An endpoint was found. We request a connection to it.
+                Nearby.getConnectionsClient(this@MainActivity)
+                    .requestConnection("test", endpointId, connectionLifecycleCallback)
+                    .addOnSuccessListener { unused: Void? ->  Log.e("de.selfmade4u.glowingp2p", "success"); }
+                    .addOnFailureListener { e: Exception? ->  Log.e("de.selfmade4u.glowingp2p", "failure", e) }
+            }
+
+            override fun onEndpointLost(endpointId: String) {
+                // A previously discovered endpoint has gone away.
+                Log.e("de.selfmade4u.glowingp2p", "endpoint lost");
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -68,8 +141,16 @@ class MainActivity : ComponentActivity() {
         )
 
         if (multiplePermissionsState.allPermissionsGranted) {
-            // If all permissions are granted, then show screen with the feature enabled
-            Text("All permissions granted. Thank you!")
+            Column {
+                // If all permissions are granted, then show screen with the feature enabled
+                Text("All permissions granted. Thank you!")
+                Button(onClick = { startAdvertising() }) {
+                    Text("Start advertising")
+                }
+                Button(onClick = { startDiscovery() }) {
+                    Text("Start discovery")
+                }
+            }
         } else {
             Column {
                 Text(
