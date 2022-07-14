@@ -60,13 +60,20 @@ class MainActivity : ComponentActivity() {
     private fun startAdvertising() {
         Log.e("de.selfmade4u.glowingp2p", "start advertising");
         val advertisingOptions: AdvertisingOptions = AdvertisingOptions.Builder().setStrategy(
-            Strategy.P2P_CLUSTER).build()
+            Strategy.P2P_CLUSTER
+        ).build()
         Nearby.getConnectionsClient(this)
             .startAdvertising(
                 "test", "de.selfmade4u.glowingp2p", connectionLifecycleCallback, advertisingOptions
             )
-            .addOnSuccessListener { unused: Void? ->  Log.e("de.selfmade4u.glowingp2p", "success"); }
-            .addOnFailureListener { e: Exception? ->  Log.e("de.selfmade4u.glowingp2p", "failure", e) }
+            .addOnSuccessListener { unused: Void? -> Log.e("de.selfmade4u.glowingp2p", "success"); }
+            .addOnFailureListener { e: Exception? ->
+                Log.e(
+                    "de.selfmade4u.glowingp2p",
+                    "failure",
+                    e
+                )
+            }
     }
 
     private fun startDiscovery() {
@@ -74,8 +81,14 @@ class MainActivity : ComponentActivity() {
         val discoveryOptions = DiscoveryOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build()
         Nearby.getConnectionsClient(this)
             .startDiscovery("de.selfmade4u.glowingp2p", endpointDiscoveryCallback, discoveryOptions)
-            .addOnSuccessListener { unused: Void? ->  Log.e("de.selfmade4u.glowingp2p", "success"); }
-            .addOnFailureListener { e: Exception? ->  Log.e("de.selfmade4u.glowingp2p", "failure", e) }
+            .addOnSuccessListener { unused: Void? -> Log.e("de.selfmade4u.glowingp2p", "success"); }
+            .addOnFailureListener { e: Exception? ->
+                Log.e(
+                    "de.selfmade4u.glowingp2p",
+                    "failure",
+                    e
+                )
+            }
     }
 
     private val connectionLifecycleCallback: ConnectionLifecycleCallback =
@@ -83,7 +96,8 @@ class MainActivity : ComponentActivity() {
             override fun onConnectionInitiated(endpointId: String, connectionInfo: ConnectionInfo) {
                 Log.e("de.selfmade4u.glowingp2p", "onConnectionInitiated");
                 // Automatically accept the connection on both sides.
-                Nearby.getConnectionsClient(this@MainActivity).acceptConnection(endpointId, ReceiveBytesPayloadListener())
+                Nearby.getConnectionsClient(this@MainActivity)
+                    .acceptConnection(endpointId, ReceiveBytesPayloadListener())
             }
 
             override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
@@ -111,8 +125,19 @@ class MainActivity : ComponentActivity() {
                 // An endpoint was found. We request a connection to it.
                 Nearby.getConnectionsClient(this@MainActivity)
                     .requestConnection("test", endpointId, connectionLifecycleCallback)
-                    .addOnSuccessListener { unused: Void? ->  Log.e("de.selfmade4u.glowingp2p", "success"); }
-                    .addOnFailureListener { e: Exception? ->  Log.e("de.selfmade4u.glowingp2p", "failure", e) }
+                    .addOnSuccessListener { unused: Void? ->
+                        Log.e(
+                            "de.selfmade4u.glowingp2p",
+                            "success"
+                        );
+                    }
+                    .addOnFailureListener { e: Exception? ->
+                        Log.e(
+                            "de.selfmade4u.glowingp2p",
+                            "failure",
+                            e
+                        )
+                    }
             }
 
             override fun onEndpointLost(endpointId: String) {
