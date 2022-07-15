@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -29,6 +30,7 @@ import com.google.android.gms.nearby.connection.*
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
 import de.selfmade4u.glowingp2p.ui.theme.GlowingP2PTheme
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 
 
@@ -113,18 +115,44 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Composable
     fun SetupNearby() {
-        val nearbyDiscoveries by nearbyDiscoveriesState()
+        var enableDiscovery by remember { mutableStateOf(false) };
+        val nearbyDiscoveries =
+            if (enableDiscovery) nearbyDiscoveriesState(this@MainActivity) else remember { mutableStateOf("") };
 
         val multiplePermissionsState = rememberMultiplePermissionsState(
-            listOfNotNull(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) Manifest.permission.BLUETOOTH_ADVERTISE else null,
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) Manifest.permission.BLUETOOTH_CONNECT else null,
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) Manifest.permission.BLUETOOTH_SCAN else null,
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            )
+            /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                listOf(
+                    Manifest.permission.BLUETOOTH_SCAN,
+                    Manifest.permission.BLUETOOTH_ADVERTISE,
+                    Manifest.permission.BLUETOOTH_CONNECT,
+                    Manifest.permission.ACCESS_WIFI_STATE,
+                    Manifest.permission.CHANGE_WIFI_STATE,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                )
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                listOf(
+                    Manifest.permission.BLUETOOTH,
+                    Manifest.permission.BLUETOOTH_ADMIN,
+                    Manifest.permission.ACCESS_WIFI_STATE,
+                    Manifest.permission.CHANGE_WIFI_STATE,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                )
+            } else {
+                listOf(
+                    Manifest.permission.BLUETOOTH,
+                    Manifest.permission.BLUETOOTH_ADMIN,
+                    Manifest.permission.ACCESS_WIFI_STATE,
+                    Manifest.permission.CHANGE_WIFI_STATE,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                )
+            }*/
+        listOf(Manifest.permission.ACCESS_COARSE_LOCATION)
         )
 
         if (multiplePermissionsState.allPermissionsGranted) {
@@ -134,10 +162,10 @@ class MainActivity : ComponentActivity() {
                 Button(onClick = { startAdvertising() }) {
                     Text("Start advertising")
                 }
-                Button(onClick = { }) {
+                Button(onClick = { enableDiscovery = true; }) {
                     Text("Start discovery")
                 }
-                Text(nearbyDiscoveries)
+                Text(nearbyDiscoveries.value)
             }
         } else {
             Column {

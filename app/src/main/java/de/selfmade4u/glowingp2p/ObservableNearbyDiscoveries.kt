@@ -17,10 +17,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 
 // https://scalereal.com/android/2021/08/17/observing-live-connectivity-status-in-jetpack-compose-way.html
+// https://medium.com/androiddevelopers/migrating-from-livedata-to-kotlins-flow-379292f419fb
 
-/**
- * Network Utility to observe availability or unavailability of Internet connection
- */
 @ExperimentalCoroutinesApi
 fun Context.observeNearbyDiscoveriesAsFlow() = callbackFlow {
 
@@ -32,6 +30,7 @@ fun Context.observeNearbyDiscoveriesAsFlow() = callbackFlow {
         .startDiscovery("de.selfmade4u.glowingp2p", callback, discoveryOptions)
         .addOnSuccessListener { unused: Void? -> Log.e("de.selfmade4u.glowingp2p", "success"); }
         .addOnFailureListener { e: Exception? ->
+            trySend("error $e")
             Log.e(
                 "de.selfmade4u.glowingp2p",
                 "failure",
@@ -82,12 +81,13 @@ fun NearbyDiscoveriesCallback(addCallback: (String) -> Unit, removeCallback: (St
 
 @ExperimentalCoroutinesApi
 @Composable
-fun nearbyDiscoveriesState(): State<String> {
-    val context = LocalContext.current
+fun nearbyDiscoveriesState(activity: MainActivity): State<String> {
+
+    // maybe something here doesnt run in activity
 
     // Creates a State<ConnectionState> with current connectivity state as initial value
     return produceState(initialValue = "") {
         // In a coroutine, can make suspend calls
-        context.observeNearbyDiscoveriesAsFlow().collect { value = it }
+        activity.observeNearbyDiscoveriesAsFlow().collect { value = it }
     }
 }
