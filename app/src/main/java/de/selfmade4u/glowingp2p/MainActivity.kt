@@ -56,13 +56,14 @@ import kotlinx.coroutines.launch
 // https://developer.android.com/courses/android-basics-compose/course
 // https://developer.android.com/codelabs/android-room-with-a-view-kotlin#0
 
+// maybe use the Room shit for the connections to different devices
 
 internal class ReceiveBytesPayloadListener : PayloadCallback() {
     override fun onPayloadReceived(endpointId: String, payload: Payload) {
         // This always gets the full data of the payload. Is null if it's not a BYTES payload.
         if (payload.type == Payload.Type.BYTES) {
             val receivedBytes = payload.asBytes()
-            Log.e("de.selfmade4u.glowingp2p", receivedBytes.toString())
+            receivedBytes?.decodeToString()?.let { Log.e("de.selfmade4u.glowingp2p", it) }
         }
     }
 
@@ -104,9 +105,29 @@ class MainActivity : ComponentActivity() {
             }
 
             override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
-                Log.e("de.selfmade4u.glowingp2p", "onConnectionResult");
+                Log.e("de.selfmade4u.glowingp2p", "onConnectionResult ${result.status}");
                 when (result.status.statusCode) {
-                    ConnectionsStatusCodes.STATUS_OK -> {}
+                    ConnectionsStatusCodes.STATUS_OK -> {
+                        Log.e(
+                            "de.selfmade4u.glowingp2p",
+                            "success CONNECTED"
+                        );
+                        Nearby.getConnectionsClient(this@MainActivity)
+                            .sendPayload(endpointId, Payload.fromBytes("Hello".encodeToByteArray()))
+                            .addOnSuccessListener { unused: Void? ->
+                                Log.e(
+                                    "de.selfmade4u.glowingp2p",
+                                    "success sending"
+                                );
+                            }
+                            .addOnFailureListener { e: Exception? ->
+                                Log.e(
+                                    "de.selfmade4u.glowingp2p",
+                                    "failure",
+                                    e
+                                )
+                            }
+                    }
                     ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED -> {}
                     ConnectionsStatusCodes.STATUS_ERROR -> {}
                     else -> {}
@@ -192,14 +213,13 @@ class MainActivity : ComponentActivity() {
                                         .requestConnection(
                                             "test",
                                             message,
-                                            connectionLifecycleCallback
+                                            connectionLifecycleCallback,
                                         )
                                         .addOnSuccessListener { unused: Void? ->
                                             Log.e(
                                                 "de.selfmade4u.glowingp2p",
-                                                "success"
+                                                "success, connected"
                                             );
-
                                         }
                                         .addOnFailureListener { e: Exception? ->
                                             Log.e(
@@ -327,7 +347,7 @@ class MainActivity : ComponentActivity() {
                             })
                     }
                 }, drawerState = drawerState) {
-                    NavHost(navController = navController, startDestination = "welcome") {
+                    NavHost(navController = navController, startDestination = "setup-nearby") {
                         composable("welcome") { Text("welcome") }
                         composable("setup-nearby") { SetupNearby() }
                         /*...*/
