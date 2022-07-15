@@ -10,12 +10,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.databinding.Observable
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -39,6 +38,11 @@ import kotlinx.coroutines.launch
 // https://developer.android.com/topic/architecture
 // https://developers.google.com/nearby/connections/overview
 // https://google.github.io/accompanist/permissions/
+// https://developer.android.com/jetpack/compose/architecture
+// https://developer.android.com/topic/libraries/architecture/viewmodel
+// TODO https://developer.android.com/topic/libraries/architecture/lifecycle
+// https://developer.android.com/codelabs/jetpack-compose-state?index=..%2F..index#0
+// https://developer.android.com/jetpack/compose/libraries#streams
 
 internal class ReceiveBytesPayloadListener : PayloadCallback() {
     override fun onPayloadReceived(endpointId: String, payload: Payload) {
@@ -76,21 +80,6 @@ class MainActivity : ComponentActivity() {
             }
     }
 
-    private fun startDiscovery() {
-        Log.e("de.selfmade4u.glowingp2p", "start discovery");
-        val discoveryOptions = DiscoveryOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build()
-        Nearby.getConnectionsClient(this)
-            .startDiscovery("de.selfmade4u.glowingp2p", endpointDiscoveryCallback, discoveryOptions)
-            .addOnSuccessListener { unused: Void? -> Log.e("de.selfmade4u.glowingp2p", "success"); }
-            .addOnFailureListener { e: Exception? ->
-                Log.e(
-                    "de.selfmade4u.glowingp2p",
-                    "failure",
-                    e
-                )
-            }
-    }
-
     private val connectionLifecycleCallback: ConnectionLifecycleCallback =
         object : ConnectionLifecycleCallback() {
             override fun onConnectionInitiated(endpointId: String, connectionInfo: ConnectionInfo) {
@@ -117,35 +106,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-
-    private val endpointDiscoveryCallback: EndpointDiscoveryCallback =
-        object : EndpointDiscoveryCallback() {
-            override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
-                Log.e("de.selfmade4u.glowingp2p", "endpoint found");
-                // An endpoint was found. We request a connection to it.
-                Nearby.getConnectionsClient(this@MainActivity)
-                    .requestConnection("test", endpointId, connectionLifecycleCallback)
-                    .addOnSuccessListener { unused: Void? ->
-                        Log.e(
-                            "de.selfmade4u.glowingp2p",
-                            "success"
-                        );
-                    }
-                    .addOnFailureListener { e: Exception? ->
-                        Log.e(
-                            "de.selfmade4u.glowingp2p",
-                            "failure",
-                            e
-                        )
-                    }
-            }
-
-            override fun onEndpointLost(endpointId: String) {
-                // A previously discovered endpoint has gone away.
-                Log.e("de.selfmade4u.glowingp2p", "endpoint lost");
-            }
-        }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -155,6 +115,8 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun SetupNearby() {
+        val nearbyDiscoveries by nearbyDiscoveriesState()
+
         val multiplePermissionsState = rememberMultiplePermissionsState(
             listOfNotNull(
                 Manifest.permission.ACCESS_FINE_LOCATION,
@@ -172,9 +134,10 @@ class MainActivity : ComponentActivity() {
                 Button(onClick = { startAdvertising() }) {
                     Text("Start advertising")
                 }
-                Button(onClick = { startDiscovery() }) {
+                Button(onClick = { }) {
                     Text("Start discovery")
                 }
+                Text(nearbyDiscoveries)
             }
         } else {
             Column {
