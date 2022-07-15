@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.callbackFlow
 @ExperimentalCoroutinesApi
 fun Context.observeNearbyDiscoveriesAsFlow() = callbackFlow {
 
-    val callback = NearbyDiscoveriesCallback({ discoveryState -> trySend(discoveryState) }, { discoveryState -> trySend(discoveryState) })
+    val callback = NearbyDiscoveriesCallback { discoveryState -> trySend(discoveryState) }
 
     Log.e("de.selfmade4u.glowingp2p", "start discovery")
     val discoveryOptions = DiscoveryOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build()
@@ -30,7 +30,7 @@ fun Context.observeNearbyDiscoveriesAsFlow() = callbackFlow {
         .startDiscovery("de.selfmade4u.glowingp2p", callback, discoveryOptions)
         .addOnSuccessListener { unused: Void? -> Log.e("de.selfmade4u.glowingp2p", "success"); }
         .addOnFailureListener { e: Exception? ->
-            trySend("error $e")
+            trySend(listOf("error $e"))
             Log.e(
                 "de.selfmade4u.glowingp2p",
                 "failure",
@@ -39,7 +39,7 @@ fun Context.observeNearbyDiscoveriesAsFlow() = callbackFlow {
         }
 
     // Set current state
-    trySend("")
+    trySend(listOf())
 
     // Remove callback when not used
     awaitClose {
@@ -48,11 +48,14 @@ fun Context.observeNearbyDiscoveriesAsFlow() = callbackFlow {
     }
 }
 
-fun NearbyDiscoveriesCallback(addCallback: (String) -> Unit, removeCallback: (String) -> Unit): EndpointDiscoveryCallback {
+fun NearbyDiscoveriesCallback(callback: (List<String>) -> Unit): EndpointDiscoveryCallback {
     return object : EndpointDiscoveryCallback() {
+        var list: List<String> = listOf();
+
         override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
             Log.e("de.selfmade4u.glowingp2p", "endpoint found");
-            addCallback(endpointId)
+            list = list.plus(endpointId);
+            callback(list)
             // An endpoint was found. We request a connection to it.
             /*Nearby.getConnectionsClient(this@MainActivity)
                 .requestConnection("test", endpointId, connectionLifecycleCallback)
@@ -74,19 +77,20 @@ fun NearbyDiscoveriesCallback(addCallback: (String) -> Unit, removeCallback: (St
         override fun onEndpointLost(endpointId: String) {
             // A previously discovered endpoint has gone away.
             Log.e("de.selfmade4u.glowingp2p", "endpoint lost");
-            removeCallback(endpointId)
+            list = list.minus(endpointId);
+            callback(list)
         }
     }
 }
 
 @ExperimentalCoroutinesApi
 @Composable
-fun nearbyDiscoveriesState(activity: MainActivity): State<String> {
+fun nearbyDiscoveriesState(activity: MainActivity): State<List<String>> {
 
     // maybe something here doesnt run in activity
 
     // Creates a State<ConnectionState> with current connectivity state as initial value
-    return produceState(initialValue = "") {
+    return produceState(initialValue = listOf()) {
         // In a coroutine, can make suspend calls
         activity.observeNearbyDiscoveriesAsFlow().collect { value = it }
     }

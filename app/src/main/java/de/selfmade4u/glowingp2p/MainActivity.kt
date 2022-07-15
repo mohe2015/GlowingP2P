@@ -1,18 +1,24 @@
 package de.selfmade4u.glowingp2p
 
 import android.Manifest
+import android.R
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.databinding.Observable
@@ -120,7 +126,7 @@ class MainActivity : ComponentActivity() {
     fun SetupNearby() {
         var enableDiscovery by remember { mutableStateOf(false) };
         val nearbyDiscoveries =
-            if (enableDiscovery) nearbyDiscoveriesState(this@MainActivity) else remember { mutableStateOf("") };
+            if (enableDiscovery) nearbyDiscoveriesState(this@MainActivity) else remember { mutableStateOf(listOf()) };
 
         val multiplePermissionsState = rememberMultiplePermissionsState(
             /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -165,7 +171,26 @@ class MainActivity : ComponentActivity() {
                 Button(onClick = { enableDiscovery = true; }) {
                     Text("Start discovery")
                 }
-                Text(nearbyDiscoveries.value)
+                LazyColumn {
+                    items(nearbyDiscoveries.value) { message ->
+                        Text(message)
+                       /* ClickableText(AnnotatedString(message), onClick = { Nearby.getConnectionsClient(this@MainActivity)
+                            .requestConnection("test", message, connectionLifecycleCallback)
+                            .addOnSuccessListener { unused: Void? ->
+                                Log.e(
+                                    "de.selfmade4u.glowingp2p",
+                                    "success"
+                                );
+                            }
+                            .addOnFailureListener { e: Exception? ->
+                                Log.e(
+                                    "de.selfmade4u.glowingp2p",
+                                    "failure",
+                                    e
+                                )
+                            } });*/
+                    }
+                }
             }
         } else {
             Column {
@@ -228,64 +253,66 @@ class MainActivity : ComponentActivity() {
         val currentDestination = navBackStackEntry?.destination
         val coroutineScope = rememberCoroutineScope()
         GlowingP2PTheme {
-            ModalNavigationDrawer(drawerContent = {
-                Column {
-                    NavigationDrawerItem(
-                        label = { Text("Welcome") },
-                        selected = currentDestination?.hierarchy?.any { it.route == "welcome" } == true,
-                        onClick = {
-                            navController.navigate("welcome") {
-                                // Pop up to the start destination of the graph to
-                                // avoid building up a large stack of destinations
-                                // on the back stack as users select items
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+            Surface {
+                ModalNavigationDrawer(drawerContent = {
+                    Column {
+                        NavigationDrawerItem(
+                            label = { Text("Welcome") },
+                            selected = currentDestination?.hierarchy?.any { it.route == "welcome" } == true,
+                            onClick = {
+                                navController.navigate("welcome") {
+                                    // Pop up to the start destination of the graph to
+                                    // avoid building up a large stack of destinations
+                                    // on the back stack as users select items
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    // Avoid multiple copies of the same destination when
+                                    // reselecting the same item
+                                    launchSingleTop = true
+                                    // Restore state when reselecting a previously selected item
+                                    restoreState = true
                                 }
-                                // Avoid multiple copies of the same destination when
-                                // reselecting the same item
-                                launchSingleTop = true
-                                // Restore state when reselecting a previously selected item
-                                restoreState = true
-                            }
-                            coroutineScope.launch {
-                                drawerState.close()
-                            }
-                        })
-                    NavigationDrawerItem(
-                        label = { Text("Setup Nearby") },
-                        selected = currentDestination?.hierarchy?.any { it.route == "setup-nearby" } == true,
-                        onClick = {
-                            navController.navigate("setup-nearby") {
-                                // Pop up to the start destination of the graph to
-                                // avoid building up a large stack of destinations
-                                // on the back stack as users select items
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                                coroutineScope.launch {
+                                    drawerState.close()
                                 }
-                                // Avoid multiple copies of the same destination when
-                                // reselecting the same item
-                                launchSingleTop = true
-                                // Restore state when reselecting a previously selected item
-                                restoreState = true
-                            }
-                            coroutineScope.launch {
-                                drawerState.close()
-                            }
-                        })
+                            })
+                        NavigationDrawerItem(
+                            label = { Text("Setup Nearby") },
+                            selected = currentDestination?.hierarchy?.any { it.route == "setup-nearby" } == true,
+                            onClick = {
+                                navController.navigate("setup-nearby") {
+                                    // Pop up to the start destination of the graph to
+                                    // avoid building up a large stack of destinations
+                                    // on the back stack as users select items
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    // Avoid multiple copies of the same destination when
+                                    // reselecting the same item
+                                    launchSingleTop = true
+                                    // Restore state when reselecting a previously selected item
+                                    restoreState = true
+                                }
+                                coroutineScope.launch {
+                                    drawerState.close()
+                                }
+                            })
+                    }
+                }, drawerState = drawerState) {
+                    NavHost(navController = navController, startDestination = "welcome") {
+                        composable("welcome") { Text("welcome") }
+                        composable("setup-nearby") { SetupNearby() }
+                        /*...*/
+                    }
                 }
-            }, drawerState = drawerState) {
-                NavHost(navController = navController, startDestination = "welcome") {
-                    composable("welcome") { Text("welcome") }
-                    composable("setup-nearby") { SetupNearby() }
-                    /*...*/
-                }
-            }
-            /*
+                /*
             // A surface container using the 'background' color from the theme
             Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
 
 
             }*/
+            }
         }
     }
 }
