@@ -57,12 +57,12 @@ import kotlinx.coroutines.launch
 // https://developer.android.com/codelabs/android-room-with-a-view-kotlin#0
 
 
-
 internal class ReceiveBytesPayloadListener : PayloadCallback() {
     override fun onPayloadReceived(endpointId: String, payload: Payload) {
         // This always gets the full data of the payload. Is null if it's not a BYTES payload.
         if (payload.type == Payload.Type.BYTES) {
             val receivedBytes = payload.asBytes()
+            Log.e("de.selfmade4u.glowingp2p", receivedBytes.toString())
         }
     }
 
@@ -132,7 +132,11 @@ class MainActivity : ComponentActivity() {
     fun SetupNearby() {
         var enableDiscovery by remember { mutableStateOf(false) };
         val nearbyDiscoveries =
-            if (enableDiscovery) nearbyDiscoveriesState(this@MainActivity) else remember { mutableStateOf(listOf()) };
+            if (enableDiscovery) nearbyDiscoveriesState(this@MainActivity) else remember {
+                mutableStateOf(
+                    listOf()
+                )
+            };
 
         val multiplePermissionsState = rememberMultiplePermissionsState(
             /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -164,7 +168,7 @@ class MainActivity : ComponentActivity() {
                     Manifest.permission.ACCESS_COARSE_LOCATION,
                 )
             }*/
-        listOf(Manifest.permission.ACCESS_COARSE_LOCATION)
+            listOf(Manifest.permission.ACCESS_COARSE_LOCATION)
         )
 
         if (multiplePermissionsState.allPermissionsGranted) {
@@ -179,33 +183,39 @@ class MainActivity : ComponentActivity() {
                 }
                 LazyColumn {
                     items(nearbyDiscoveries.value) { message ->
-                        Text( // 4.
-                            message,
-                            Modifier // 5.
-                                .fillMaxWidth(1.0f)
-                                .clickable( // 6.
-                                    onClick = {
+                        Card(
+                            modifier = Modifier
+                                .padding(vertical = 4.dp, horizontal = 8.dp)
+                                .clickable {
+                                    Nearby
+                                        .getConnectionsClient(this@MainActivity)
+                                        .requestConnection(
+                                            "test",
+                                            message,
+                                            connectionLifecycleCallback
+                                        )
+                                        .addOnSuccessListener { unused: Void? ->
+                                            Log.e(
+                                                "de.selfmade4u.glowingp2p",
+                                                "success"
+                                            );
 
-                                    },
-                                    interactionSource = MutableInteractionSource(),
-                                    indication = rememberRipple(bounded = true), // 7.
-                                )
-                        )
-                       /* ClickableText(AnnotatedString(message), onClick = { Nearby.getConnectionsClient(this@MainActivity)
-                            .requestConnection("test", message, connectionLifecycleCallback)
-                            .addOnSuccessListener { unused: Void? ->
-                                Log.e(
-                                    "de.selfmade4u.glowingp2p",
-                                    "success"
-                                );
+                                        }
+                                        .addOnFailureListener { e: Exception? ->
+                                            Log.e(
+                                                "de.selfmade4u.glowingp2p",
+                                                "failure",
+                                                e
+                                            )
+                                        }
+                                }
+                        ) {
+                            Row(modifier = Modifier
+                                .padding(12.dp)
+                                .fillMaxWidth()) {
+                                Text(text = message)
                             }
-                            .addOnFailureListener { e: Exception? ->
-                                Log.e(
-                                    "de.selfmade4u.glowingp2p",
-                                    "failure",
-                                    e
-                                )
-                            } });*/
+                        }
                     }
                 }
             }
