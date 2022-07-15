@@ -7,13 +7,14 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -51,6 +52,11 @@ import kotlinx.coroutines.launch
 // TODO https://developer.android.com/topic/libraries/architecture/lifecycle
 // https://developer.android.com/codelabs/jetpack-compose-state?index=..%2F..index#0
 // https://developer.android.com/jetpack/compose/libraries#streams
+
+// https://developer.android.com/courses/android-basics-compose/course
+// https://developer.android.com/codelabs/android-room-with-a-view-kotlin#0
+
+
 
 internal class ReceiveBytesPayloadListener : PayloadCallback() {
     override fun onPayloadReceived(endpointId: String, payload: Payload) {
@@ -173,7 +179,18 @@ class MainActivity : ComponentActivity() {
                 }
                 LazyColumn {
                     items(nearbyDiscoveries.value) { message ->
-                        Text(message)
+                        Text( // 4.
+                            message,
+                            Modifier // 5.
+                                .fillMaxWidth(1.0f)
+                                .clickable( // 6.
+                                    onClick = {
+
+                                    },
+                                    interactionSource = MutableInteractionSource(),
+                                    indication = rememberRipple(bounded = true), // 7.
+                                )
+                        )
                        /* ClickableText(AnnotatedString(message), onClick = { Nearby.getConnectionsClient(this@MainActivity)
                             .requestConnection("test", message, connectionLifecycleCallback)
                             .addOnSuccessListener { unused: Void? ->
