@@ -80,71 +80,6 @@ internal class ReceiveBytesPayloadListener : PayloadCallback() {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 class MainActivity : ComponentActivity() {
 
-    private fun startAdvertising() {
-        Log.e("de.selfmade4u.glowingp2p", "start advertising");
-        val advertisingOptions: AdvertisingOptions = AdvertisingOptions.Builder().setStrategy(
-            Strategy.P2P_CLUSTER
-        ).build()
-        Nearby.getConnectionsClient(this)
-            .startAdvertising(
-                "test", "de.selfmade4u.glowingp2p", connectionLifecycleCallback, advertisingOptions
-            )
-            .addOnSuccessListener { unused: Void? -> Log.e("de.selfmade4u.glowingp2p", "success"); }
-            .addOnFailureListener { e: Exception? ->
-                Log.e(
-                    "de.selfmade4u.glowingp2p",
-                    "failure",
-                    e
-                )
-            }
-    }
-
-    private val connectionLifecycleCallback: ConnectionLifecycleCallback =
-        object : ConnectionLifecycleCallback() {
-            override fun onConnectionInitiated(endpointId: String, connectionInfo: ConnectionInfo) {
-                Log.e("de.selfmade4u.glowingp2p", "onConnectionInitiated");
-                // Automatically accept the connection on both sides.
-                Nearby.getConnectionsClient(this@MainActivity)
-                    .acceptConnection(endpointId, ReceiveBytesPayloadListener())
-            }
-
-            override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
-                Log.e("de.selfmade4u.glowingp2p", "onConnectionResult ${result.status}");
-                when (result.status.statusCode) {
-                    ConnectionsStatusCodes.STATUS_OK -> {
-                        Log.e(
-                            "de.selfmade4u.glowingp2p",
-                            "success CONNECTED"
-                        );
-                        Nearby.getConnectionsClient(this@MainActivity)
-                            .sendPayload(endpointId, Payload.fromBytes("Hello".encodeToByteArray()))
-                            .addOnSuccessListener { unused: Void? ->
-                                Log.e(
-                                    "de.selfmade4u.glowingp2p",
-                                    "success sending"
-                                );
-                            }
-                            .addOnFailureListener { e: Exception? ->
-                                Log.e(
-                                    "de.selfmade4u.glowingp2p",
-                                    "failure",
-                                    e
-                                )
-                            }
-                    }
-                    ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED -> {}
-                    ConnectionsStatusCodes.STATUS_ERROR -> {}
-                    else -> {}
-                }
-            }
-
-            override fun onDisconnected(endpointId: String) {
-                Log.e("de.selfmade4u.glowingp2p", "disconnected");
-                // We've been disconnected from this endpoint. No more data can be
-                // sent or received.
-            }
-        }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -200,7 +135,7 @@ class MainActivity : ComponentActivity() {
             Column {
                 // If all permissions are granted, then show screen with the feature enabled
                 Text("All permissions granted. Thank you!")
-                Button(onClick = { startAdvertising() }) {
+                Button(onClick = { NearbyHelper().startAdvertising(this@MainActivity) }) {
                     Text("Start advertising")
                 }
                 Button(onClick = { enableDiscovery = true; }) {
@@ -218,6 +153,7 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier
                                 .padding(vertical = 4.dp, horizontal = 8.dp)
                                 .clickable {
+                                    /*
                                     Nearby
                                         .getConnectionsClient(this@MainActivity)
                                         .requestConnection(
@@ -238,6 +174,8 @@ class MainActivity : ComponentActivity() {
                                                 e
                                             )
                                         }
+
+                                     */
                                 }
                         ) {
                             Row(modifier = Modifier
