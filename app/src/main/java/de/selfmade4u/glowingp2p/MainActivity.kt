@@ -40,6 +40,8 @@ import com.google.android.gms.tasks.OnSuccessListener
 import de.selfmade4u.glowingp2p.ui.theme.GlowingP2PTheme
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.collectAsState
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 
 // https://foso.github.io/Jetpack-Compose-Playground/
@@ -90,6 +92,7 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Composable
     fun SetupNearby() {
+        val dbUsers: List<User> by AppDatabase.getInstance(this).userDao().getAll().collectAsState(listOf());
         var enableDiscovery by remember { mutableStateOf(false) };
         val nearbyDiscoveries =
             if (enableDiscovery) nearbyDiscoveriesState(this@MainActivity) else remember {
@@ -147,6 +150,12 @@ class MainActivity : ComponentActivity() {
                 }) {
                     Text("Start service")
                 }
+                LazyColumn {
+                    items(dbUsers) { user ->
+                        Text(user.firstName.orEmpty())
+                    }
+                }
+                // https://medium.com/androiddevelopers/room-flow-273acffe5b57
                 LazyColumn {
                     items(nearbyDiscoveries.value) { message ->
                         Card(

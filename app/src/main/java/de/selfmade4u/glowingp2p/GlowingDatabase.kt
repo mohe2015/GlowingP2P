@@ -2,6 +2,7 @@ package de.selfmade4u.glowingp2p
 
 import android.content.Context
 import androidx.room.*
+import kotlinx.coroutines.flow.Flow
 
 @Entity
 data class User(
@@ -13,7 +14,7 @@ data class User(
 @Dao
 interface UserDao {
     @Query("SELECT * FROM user")
-    fun getAll(): List<User>
+    fun getAll(): Flow<List<User>>
 
     @Query("SELECT * FROM user WHERE uid IN (:userIds)")
     fun loadAllByIds(userIds: IntArray): List<User>

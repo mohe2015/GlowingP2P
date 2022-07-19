@@ -7,6 +7,7 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import kotlin.random.Random
 
 
 class NearbyDiscoverService : Service() {
@@ -28,7 +29,7 @@ class NearbyDiscoverService : Service() {
 
         NearbyHelper().startAdvertising(this);2
 
-        AppDatabase.getInstance(this).userDao().getAll();
+        AppDatabase.getInstance(this).userDao().insertAll(User(Random.nextInt(), "hallo", "test"));
 
         return START_STICKY;
     }
