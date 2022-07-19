@@ -20,6 +20,8 @@
     <!-- Only required for apps targeting Android 13 and higher -->
     <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
 
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -41,6 +43,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".NearbyDiscoverService"
+            android:foregroundServiceType="location"
+            android:exported="false"
+            />
     </application>
 
 </manifest>

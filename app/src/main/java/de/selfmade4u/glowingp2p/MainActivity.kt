@@ -2,6 +2,7 @@ package de.selfmade4u.glowingp2p
 
 import android.Manifest
 import android.R
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -57,6 +58,9 @@ import kotlinx.coroutines.launch
 // https://developer.android.com/codelabs/android-room-with-a-view-kotlin#0
 
 // maybe use the Room shit for the connections to different devices
+// idea would maybe be using the Room api to have a list of "Chats" and
+// on connecting a loading indicator and when connected you can open the chat
+// then you can write in there and see the chat history.
 
 internal class ReceiveBytesPayloadListener : PayloadCallback() {
     override fun onPayloadReceived(endpointId: String, payload: Payload) {
@@ -201,6 +205,12 @@ class MainActivity : ComponentActivity() {
                 }
                 Button(onClick = { enableDiscovery = true; }) {
                     Text("Start discovery")
+                }
+                Button(onClick = {
+                    val intent = Intent(this@MainActivity, NearbyDiscoverService::class.java);
+                    startForegroundService(intent);
+                }) {
+                    Text("Start service")
                 }
                 LazyColumn {
                     items(nearbyDiscoveries.value) { message ->
