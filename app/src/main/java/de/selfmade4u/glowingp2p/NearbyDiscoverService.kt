@@ -26,7 +26,9 @@ class NearbyDiscoverService : Service() {
 
         startForeground(1, notification)
 
-        NearbyHelper().startAdvertising(this);
+        NearbyHelper().startAdvertising(this);2
+
+        AppDatabase.getInstance(this).userDao().getAll();
 
         return START_STICKY;
     }
