@@ -93,13 +93,6 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun SetupNearby() {
         val dbUsers: List<User> by AppDatabase.getInstance(this).userDao().getAll().collectAsState(listOf());
-        var enableDiscovery by remember { mutableStateOf(false) };
-        val nearbyDiscoveries =
-            if (enableDiscovery) nearbyDiscoveriesState(this@MainActivity) else remember {
-                mutableStateOf(
-                    listOf()
-                )
-            };
 
         val multiplePermissionsState = rememberMultiplePermissionsState(
             /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -138,12 +131,6 @@ class MainActivity : ComponentActivity() {
             Column {
                 // If all permissions are granted, then show screen with the feature enabled
                 Text("All permissions granted. Thank you!")
-                Button(onClick = { NearbyHelper().startAdvertising(this@MainActivity) }) {
-                    Text("Start advertising")
-                }
-                Button(onClick = { enableDiscovery = true; }) {
-                    Text("Start discovery")
-                }
                 Button(onClick = {
                     val intent = Intent(this@MainActivity, NearbyDiscoverService::class.java);
                     startForegroundService(intent);
@@ -151,13 +138,7 @@ class MainActivity : ComponentActivity() {
                     Text("Start service")
                 }
                 LazyColumn {
-                    items(dbUsers) { user ->
-                        Text(user.firstName.orEmpty())
-                    }
-                }
-                // https://medium.com/androiddevelopers/room-flow-273acffe5b57
-                LazyColumn {
-                    items(nearbyDiscoveries.value) { message ->
+                    items(dbUsers) { message ->
                         Card(
                             modifier = Modifier
                                 .padding(vertical = 4.dp, horizontal = 8.dp)
@@ -190,7 +171,7 @@ class MainActivity : ComponentActivity() {
                             Row(modifier = Modifier
                                 .padding(12.dp)
                                 .fillMaxWidth()) {
-                                Text(text = message)
+                                Text(text = message.uid.toString())
                             }
                         }
                     }

@@ -27,7 +27,8 @@ class NearbyDiscoverService : Service() {
 
         startForeground(1, notification)
 
-        NearbyHelper().startAdvertising(this);2
+        NearbyHelper().startAdvertising(this);
+        NearbyHelper().startDiscovery(this);
 
         AppDatabase.getInstance(this).userDao().insertAll(User(Random.nextInt(), "hallo", "test"));
 
