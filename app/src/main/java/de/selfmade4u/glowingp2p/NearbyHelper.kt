@@ -4,13 +4,14 @@ import android.content.Context
 import android.util.Log
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
+import kotlin.random.Random
 
 class NearbyHelper {
 
     fun startDiscovery(context: Context) {
         val discoveryOptions = DiscoveryOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build()
         Nearby.getConnectionsClient(context)
-            .startDiscovery("de.selfmade4u.glowingp2p", endpointDiscoveryCallback(), discoveryOptions)
+            .startDiscovery("de.selfmade4u.glowingp2p", endpointDiscoveryCallback(context), discoveryOptions)
             .addOnSuccessListener { unused: Void? -> Log.e("de.selfmade4u.glowingp2p", "success"); }
             .addOnFailureListener { e: Exception? ->
                 Log.e(
@@ -22,14 +23,13 @@ class NearbyHelper {
 
     }
 
-    private fun endpointDiscoveryCallback(): EndpointDiscoveryCallback {
+    private fun endpointDiscoveryCallback(context: Context): EndpointDiscoveryCallback {
         return object : EndpointDiscoveryCallback() {
-            var list: List<String> = listOf();
 
             override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
                 Log.e("de.selfmade4u.glowingp2p", "endpoint found");
 
-                list = list.plus(endpointId);
+                AppDatabase.getInstance(context).activeEndpointDao().insert(ActiveEndpoint(endpointId));
 
                 // An endpoint was found. We request a connection to it.
                 /*Nearby.getConnectionsClient(this@MainActivity)
@@ -52,7 +52,6 @@ class NearbyHelper {
             override fun onEndpointLost(endpointId: String) {
                 // A previously discovered endpoint has gone away.
                 Log.e("de.selfmade4u.glowingp2p", "endpoint lost");
-                list = list.minus(endpointId);
             }
         }
     }

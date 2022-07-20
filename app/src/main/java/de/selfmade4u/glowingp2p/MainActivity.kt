@@ -92,7 +92,7 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Composable
     fun SetupNearby() {
-        val dbUsers: List<User> by AppDatabase.getInstance(this).userDao().getAll().collectAsState(listOf());
+        val activeEndpoints: List<ActiveEndpoint> by AppDatabase.getInstance(this).activeEndpointDao().getAll().collectAsState(listOf());
 
         val multiplePermissionsState = rememberMultiplePermissionsState(
             /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -138,7 +138,7 @@ class MainActivity : ComponentActivity() {
                     Text("Start service")
                 }
                 LazyColumn {
-                    items(dbUsers) { message ->
+                    items(activeEndpoints) { activeEndpoint ->
                         Card(
                             modifier = Modifier
                                 .padding(vertical = 4.dp, horizontal = 8.dp)
@@ -171,7 +171,7 @@ class MainActivity : ComponentActivity() {
                             Row(modifier = Modifier
                                 .padding(12.dp)
                                 .fillMaxWidth()) {
-                                Text(text = message.uid.toString())
+                                Text(text = activeEndpoint.endpointId)
                             }
                         }
                     }

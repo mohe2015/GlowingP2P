@@ -4,30 +4,29 @@ import android.content.Context
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 
-@Entity
-data class User(
-    @PrimaryKey val uid: Int,
-    @ColumnInfo(name = "first_name") val firstName: String?,
-    @ColumnInfo(name = "last_name") val lastName: String?
+@Entity(tableName = "active_endpoints")
+data class ActiveEndpoint (
+    @PrimaryKey
+    @ColumnInfo(name = "endpoint_id")
+    val endpointId: String,
 )
 
 @Dao
-interface UserDao {
-    @Query("SELECT * FROM user")
-    fun getAll(): Flow<List<User>>
+interface ActiveEndpointsDao {
+    @Query("SELECT * FROM active_endpoints")
+    fun getAll(): Flow<List<ActiveEndpoint>>
 
-    @Query("SELECT * FROM user WHERE uid IN (:userIds)")
-    fun loadAllByIds(userIds: IntArray): List<User>
-
-    @Query("SELECT * FROM user WHERE first_name LIKE :first AND " +
-            "last_name LIKE :last LIMIT 1")
-    fun findByName(first: String, last: String): User
+    @Query("SELECT * FROM active_endpoints WHERE endpoint_id = :endpointId")
+    fun loadByEndpointId(endpointId: String): List<ActiveEndpoint>
 
     @Insert
-    fun insertAll(vararg users: User)
+    fun insert(endpoint: ActiveEndpoint)
 
     @Delete
-    fun delete(user: User)
+    fun delete(endpoint: ActiveEndpoint)
+
+    @Query("DELETE FROM active_endpoints")
+    fun deleteAll()
 }
 
 open class SingletonHolder<out T: Any, in A>(creator: (A) -> T) {
@@ -54,9 +53,9 @@ open class SingletonHolder<out T: Any, in A>(creator: (A) -> T) {
     }
 }
 
-@Database(entities = [User::class], version = 1)
+@Database(entities = [ActiveEndpoint::class], version = 1)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun userDao(): UserDao
+    abstract fun activeEndpointDao(): ActiveEndpointsDao
 
     companion object : SingletonHolder<AppDatabase, Context>({
         Room.databaseBuilder(it.applicationContext,

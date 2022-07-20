@@ -27,10 +27,10 @@ class NearbyDiscoverService : Service() {
 
         startForeground(1, notification)
 
+        AppDatabase.getInstance(this).activeEndpointDao().deleteAll();
+
         NearbyHelper().startAdvertising(this);
         NearbyHelper().startDiscovery(this);
-
-        AppDatabase.getInstance(this).userDao().insertAll(User(Random.nextInt(), "hallo", "test"));
 
         return START_STICKY;
     }
