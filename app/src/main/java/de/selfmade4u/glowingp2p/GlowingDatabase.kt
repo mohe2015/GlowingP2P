@@ -2,6 +2,7 @@ package de.selfmade4u.glowingp2p
 
 import android.content.Context
 import androidx.room.*
+import androidx.room.migration.AutoMigrationSpec
 import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "active_endpoints")
@@ -53,9 +54,14 @@ open class SingletonHolder<out T: Any, in A>(creator: (A) -> T) {
     }
 }
 
-@Database(entities = [ActiveEndpoint::class], version = 1)
+@Database(entities = [ActiveEndpoint::class], version = 1, /*autoMigrations = [
+    AutoMigration (from = 1, to = 2, spec = AppDatabase.MyAutoMigration1_2::class)
+]*/)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun activeEndpointDao(): ActiveEndpointsDao
+
+    //@DeleteTable(tableName = "users")
+    //class MyAutoMigration1_2 : AutoMigrationSpec
 
     companion object : SingletonHolder<AppDatabase, Context>({
         Room.databaseBuilder(it.applicationContext,

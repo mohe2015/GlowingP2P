@@ -1,0 +1,34 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "b8a26af2cc281556835c231ceaae6946",
+    "entities": [
+      {
+        "tableName": "active_endpoints",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`endpoint_id` TEXT NOT NULL, PRIMARY KEY(`endpoint_id`))",
+        "fields": [
+          {
+            "fieldPath": "endpointId",
+            "columnName": "endpoint_id",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "endpoint_id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b8a26af2cc281556835c231ceaae6946')"
+    ]
+  }
+}
